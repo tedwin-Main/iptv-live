@@ -14,10 +14,11 @@ OUTPUT = Path(__file__).resolve().parent.parent / "public" / "playlist.m3u"
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 11) OTT Navigator"
 PROBE_THREADS = 64
 PROBE_TIMEOUT_S = 10
-COUNTRY_CATEGORIES = ("Malaysia", "Singapore")
+COUNTRY_CATEGORIES = ("Malaysia", "Singapore", "Hong Kong")
 CATEGORIES = ("English", "Chinese", "Malay", "Korean", "Japanese", *COUNTRY_CATEGORIES)
 CHINESE_DIALECTS = {"Cantonese", "Hakka", "Hokkien", "Teochew"}
 MALAY_LANGUAGES = {"Malay", "Indonesian"}
+MOVED_COUNTRIES = {"hk": "Hong Kong"}  # tvg-id country shown only in its own category, not its language
 
 
 @dataclass
@@ -30,6 +31,11 @@ class Entry:
     def group(self) -> str:
         match = re.search(r'group-title="([^"]*)"', self.info)
         return match.group(1) if match else "Undefined"
+
+    @property
+    def country(self) -> str:
+        match = re.search(r'tvg-id="[^"]*\.([a-z]{2})(?:@[^"]*)?"', self.info)
+        return match.group(1) if match else ""
 
     @property
     def name(self) -> str:
@@ -66,14 +72,18 @@ def main() -> None:
 
 
 def collect_entries() -> list[Entry]:
-    """Language entries regrouped into CATEGORIES, plus Malaysia and Singapore channels from the country list."""
+    """Language entries regrouped into CATEGORIES, plus COUNTRY_CATEGORIES channels from the country list."""
     by_language = [
         entry.with_group(category)
         for entry in parse_m3u(fetch_text(LANGUAGE_URL))
-        if (category := category_for_language(entry.group))
+        if (category := category_for_entry(entry))
     ]
     by_country = [e for e in parse_m3u(fetch_text(COUNTRY_URL)) if e.group in COUNTRY_CATEGORIES]
     return dedupe(by_language + by_country)
+
+
+def category_for_entry(entry: Entry) -> str | None:
+    return MOVED_COUNTRIES.get(entry.country) or category_for_language(entry.group)
 
 
 def category_for_language(language: str) -> str | None:

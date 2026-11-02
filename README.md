@@ -12,6 +12,7 @@ and a 48-hour TV guide.
 | Japanese | Japanese |
 | Malaysia | Every channel from Malaysia, also listed under its language |
 | Singapore | Every channel from Singapore, also listed under its language |
+| Hong Kong | Channels with a Hong Kong id; shown only here, not under their language |
 
 All other languages are dropped. Rebuilt every day at 04:00 Malaysia time by GitHub Actions.
 
@@ -24,8 +25,8 @@ The playlist header points at the guide (`url-tvg`), so most players pick it up 
 
 ## How it works
 
-- `playlist/build_playlist.py`: fetches `index.language.m3u` (mapped to the categories above) plus Malaysia
-  and Singapore from `index.country.m3u`, then requests every stream once.
+- `playlist/build_playlist.py`: fetches `index.language.m3u` (mapped to the categories above) plus Malaysia,
+  Singapore and Hong Kong from `index.country.m3u`, then requests every stream once.
   - **Kept:** answers 2xx with a real HLS playlist.
   - **Dropped:** no DNS, timeout, refused connection, any 4xx/5xx (401/403 included: tested from Malaysia, these
     refuse there too), or a body that is not HLS.
