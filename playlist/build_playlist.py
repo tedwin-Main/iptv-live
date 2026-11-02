@@ -14,7 +14,8 @@ OUTPUT = Path(__file__).resolve().parent.parent / "public" / "playlist.m3u"
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 11) OTT Navigator"
 PROBE_THREADS = 64
 PROBE_TIMEOUT_S = 10
-CATEGORIES = ("English", "Chinese", "Malay", "Korean", "Japanese", "Malaysia")
+COUNTRY_CATEGORIES = ("Malaysia", "Singapore")
+CATEGORIES = ("English", "Chinese", "Malay", "Korean", "Japanese", *COUNTRY_CATEGORIES)
 CHINESE_DIALECTS = {"Cantonese", "Hakka", "Hokkien", "Teochew"}
 MALAY_LANGUAGES = {"Malay", "Indonesian"}
 
@@ -65,14 +66,14 @@ def main() -> None:
 
 
 def collect_entries() -> list[Entry]:
-    """Language entries regrouped into CATEGORIES, plus Malaysia's channels from the country list."""
+    """Language entries regrouped into CATEGORIES, plus Malaysia and Singapore channels from the country list."""
     by_language = [
         entry.with_group(category)
         for entry in parse_m3u(fetch_text(LANGUAGE_URL))
         if (category := category_for_language(entry.group))
     ]
-    malaysian = [e for e in parse_m3u(fetch_text(COUNTRY_URL)) if e.group == "Malaysia"]
-    return dedupe(by_language + malaysian)
+    by_country = [e for e in parse_m3u(fetch_text(COUNTRY_URL)) if e.group in COUNTRY_CATEGORIES]
+    return dedupe(by_language + by_country)
 
 
 def category_for_language(language: str) -> str | None:
