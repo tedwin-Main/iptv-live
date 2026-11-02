@@ -26,4 +26,4 @@ python3 -I playlist/build_playlist.py   # ~7 min, writes public/playlist.m3u
 python3 -I guide/build_guide.py         # ~30 s, writes public/guide.xml.gz
 ```
 
-Run it again on demand from the Actions tab: **refresh → Run workflow**.
+Run it again on demand from the Actions tab: **refresh-channel-list → Run workflow**.

@@ -1,5 +1,5 @@
 # Rebuilds playlist and guide daily, publishes them to GitHub Pages.
-name: refresh
+name: refresh-channel-list
 
 on:
   schedule:
