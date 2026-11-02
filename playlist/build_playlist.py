@@ -9,13 +9,14 @@ from pathlib import Path
 
 LANGUAGE_URL = "https://iptv-org.github.io/iptv/index.language.m3u"
 COUNTRY_URL = "https://iptv-org.github.io/iptv/index.country.m3u"
+OVERSTAR_URL = "https://qeqa.my.id/overstar2/061618"
 GUIDE_URL = "https://tedwin-main.github.io/iptv-live/guide.xml.gz"
 OUTPUT = Path(__file__).resolve().parent.parent / "public" / "playlist.m3u"
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 11) OTT Navigator"
 PROBE_THREADS = 64
 PROBE_TIMEOUT_S = 10
 COUNTRY_CATEGORIES = ("Malaysia", "Singapore", "Hong Kong")
-CATEGORIES = ("English", "Chinese", "Malay", "Korean", "Japanese", *COUNTRY_CATEGORIES)
+CATEGORIES = ("Overstar", "English", "Chinese", "Malay", "Korean", "Japanese", *COUNTRY_CATEGORIES)
 CHINESE_DIALECTS = {"Cantonese", "Hakka", "Hokkien", "Teochew"}
 MALAY_LANGUAGES = {"Malay", "Indonesian"}
 MOVED_COUNTRIES = {"hk": "Hong Kong"}  # tvg-id country shown only in its own category, not its language
@@ -75,14 +76,19 @@ def main() -> None:
 
 
 def collect_entries() -> list[Entry]:
-    """Language entries regrouped into CATEGORIES, plus COUNTRY_CATEGORIES channels."""
+    """Overstar channels, language entries regrouped into CATEGORIES, plus COUNTRY_CATEGORIES channels."""
+    overstar = [
+        entry.with_group("Overstar")
+        for entry in parse_m3u(fetch_text(OVERSTAR_URL))
+        if entry.url.startswith("http") and "ACCOUNT INFO" not in entry.info
+    ]
     by_language = [
         entry.with_group(category)
         for entry in parse_m3u(fetch_text(LANGUAGE_URL))
         if (category := category_for_entry(entry))
     ]
     by_country = [e for e in parse_m3u(fetch_text(COUNTRY_URL)) if e.group in COUNTRY_CATEGORIES]
-    return dedupe(by_language + by_country)
+    return dedupe(overstar + by_language + by_country)
 
 
 def category_for_entry(entry: Entry) -> str | None:

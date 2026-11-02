@@ -1,10 +1,11 @@
 # iptv-live
 
-Free channels from [iptv-org](https://github.com/iptv-org/iptv), grouped into categories, with dead streams removed
+Free channels from [iptv-org](https://github.com/iptv-org/iptv) and Overstar, grouped into categories, with dead streams removed
 and a 48-hour TV guide.
 
 | Category | Includes |
 |---|---|
+| Overstar | Channels from Overstar playlist |
 | English | English + creoles (e.g. Islander Creole English) |
 | Chinese | Chinese, Mandarin, Yue (Cantonese), Min Nan (Hokkien/Teochew), Hakka, other Chinese dialects |
 | Malay | Malay + Indonesian (not Malayalam) |
