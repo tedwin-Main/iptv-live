@@ -1,2 +1,3 @@
-public/
+public/*
+!public/playlist.m3u
 __pycache__/
