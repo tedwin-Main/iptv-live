@@ -20,6 +20,9 @@ CATEGORIES = ("Overstar", "English", "Chinese", "Malay", "Korean", "Japanese", *
 CHINESE_DIALECTS = {"Cantonese", "Hakka", "Hokkien", "Teochew"}
 MALAY_LANGUAGES = {"Malay", "Indonesian"}
 MOVED_COUNTRIES = {"hk": "Hong Kong"}  # tvg-id country shown only in its own category, not its language
+HK_ID_KEYS = ("tvbjade", "tvbclassic", "tvbxinghe", "phoenix", "rthk")
+HK_NAME_WORDS = ("tvb jade", "tvb classic", "tvb xing he", "jade", "viu", "hoy tv", "rthk", "mei ah",
+                 "newsworld", "news world", "pet club", "asian drama", "翡翠", "明珠", "無綫", "无线", "香港")
 
 
 @dataclass
@@ -41,6 +44,11 @@ class Entry:
     @property
     def name(self) -> str:
         return self.info.rsplit(",", 1)[-1].strip()
+
+    @property
+    def ident(self) -> str:
+        match = re.search(r'tvg-id="([^"]*)"', self.info)
+        return match.group(1).lower().split("@")[0] if match else ""
 
     def option(self, key: str) -> str | None:
         prefix = f"#EXTVLCOPT:http-{key}="
@@ -78,7 +86,7 @@ def main() -> None:
 def collect_entries() -> list[Entry]:
     """Overstar channels, language entries regrouped into CATEGORIES, plus COUNTRY_CATEGORIES channels."""
     overstar = [
-        entry.with_group("Overstar")
+        entry.with_group("Hong Kong" if is_hong_kong(entry) else "Overstar")
         for entry in parse_m3u(OVERSTAR_FILE.read_text(encoding="utf-8"))
         if entry.url.startswith("http") and "ACCOUNT INFO" not in entry.info
     ]
@@ -92,7 +100,17 @@ def collect_entries() -> list[Entry]:
 
 
 def category_for_entry(entry: Entry) -> str | None:
+    if is_hong_kong(entry):
+        return "Hong Kong"
     return MOVED_COUNTRIES.get(entry.country) or category_for_language(entry.group)
+
+
+def is_hong_kong(entry: Entry) -> bool:
+    """Hong Kong channels go to the Hong Kong category, whatever list they came from."""
+    if entry.country == "hk":
+        return True
+    name = entry.name.lower()
+    return any(key in entry.ident for key in HK_ID_KEYS) or any(word in name for word in HK_NAME_WORDS)
 
 
 def category_for_language(language: str) -> str | None:

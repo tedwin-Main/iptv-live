@@ -13,7 +13,7 @@ and a 48-hour TV guide.
 | Japanese | Japanese |
 | Malaysia | Every channel from Malaysia, also listed under its language |
 | Singapore | Every channel from Singapore, also listed under its language |
-| Hong Kong | Channels with a Hong Kong id; shown only here, not under their language |
+| Hong Kong | Channels with a Hong Kong id, plus HK feeds found in other lists (TVB, Phoenix); shown only here |
 
 All other languages are dropped. Rebuilt every day at 04:00 Malaysia time by GitHub Actions.
 
