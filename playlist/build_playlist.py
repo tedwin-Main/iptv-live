@@ -9,7 +9,7 @@ from pathlib import Path
 
 LANGUAGE_URL = "https://iptv-org.github.io/iptv/index.language.m3u"
 COUNTRY_URL = "https://iptv-org.github.io/iptv/index.country.m3u"
-OVERSTAR_URL = "https://qeqa.my.id/overstar2/061618"
+OVERSTAR_FILE = Path(__file__).resolve().parent / "overstar.m3u"  # bundled copy; live source is dead
 GUIDE_URL = "https://tedwin-main.github.io/iptv-live/guide.xml.gz"
 OUTPUT = Path(__file__).resolve().parent.parent / "public" / "playlist.m3u"
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 11) OTT Navigator"
@@ -79,7 +79,7 @@ def collect_entries() -> list[Entry]:
     """Overstar channels, language entries regrouped into CATEGORIES, plus COUNTRY_CATEGORIES channels."""
     overstar = [
         entry.with_group("Overstar")
-        for entry in parse_m3u(fetch_text(OVERSTAR_URL))
+        for entry in parse_m3u(OVERSTAR_FILE.read_text(encoding="utf-8"))
         if entry.url.startswith("http") and "ACCOUNT INFO" not in entry.info
     ]
     by_language = [
