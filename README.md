@@ -1,7 +1,18 @@
 # iptv-live
 
-Free channels from [iptv-org](https://github.com/iptv-org/iptv), grouped by country, with dead streams removed and a
-48-hour TV guide. Rebuilt every day at 04:00 Malaysia time by GitHub Actions.
+Free channels from [iptv-org](https://github.com/iptv-org/iptv), grouped into 6 categories, with dead streams removed
+and a 48-hour TV guide.
+
+| Category | Includes |
+|---|---|
+| English | English + creoles (e.g. Islander Creole English) |
+| Chinese | Chinese, Mandarin, Yue (Cantonese), Min Nan (Hokkien/Teochew), Hakka, other Chinese dialects |
+| Malay | Malay + Indonesian (not Malayalam) |
+| Korean | Korean |
+| Japanese | Japanese |
+| Malaysia | Every channel from Malaysia, also listed under its language |
+
+All other languages are dropped. Rebuilt every day at 04:00 Malaysia time by GitHub Actions.
 
 | What | URL |
 |---|---|
@@ -12,7 +23,8 @@ The playlist header points at the guide (`url-tvg`), so most players pick it up 
 
 ## How it works
 
-- `playlist/build_playlist.py`: fetches `index.country.m3u` and requests every stream once.
+- `playlist/build_playlist.py`: fetches `index.language.m3u` (mapped to the categories above) plus Malaysia from
+  `index.country.m3u`, then requests every stream once.
   - **Kept:** answers 2xx with a real HLS playlist, or 401/403/451. The check runs from US servers, so
     country-locked streams answer 403 there and are kept.
   - **Dropped:** no DNS, timeout, refused connection, 4xx/5xx, or a body that is not HLS.

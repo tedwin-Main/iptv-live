@@ -1,4 +1,5 @@
-# Builds public/playlist.m3u from iptv-org's country list, keeping only streams that answer.
+# Builds public/playlist.m3u from iptv-org's language + country lists, keeping only streams that answer.
+import dataclasses
 import re
 import sys
 import urllib.error
@@ -7,13 +8,17 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 
-SOURCE_URL = "https://iptv-org.github.io/iptv/index.country.m3u"
+LANGUAGE_URL = "https://iptv-org.github.io/iptv/index.language.m3u"
+COUNTRY_URL = "https://iptv-org.github.io/iptv/index.country.m3u"
 GUIDE_URL = "https://tedwin-main.github.io/iptv-live/guide.xml.gz"
 OUTPUT = Path(__file__).resolve().parent.parent / "public" / "playlist.m3u"
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 11) OTT Navigator"
 PROBE_THREADS = 64
 PROBE_TIMEOUT_S = 10
 GEO_BLOCK_CODES = {401, 403, 451}
+CATEGORIES = ("English", "Chinese", "Malay", "Korean", "Japanese", "Malaysia")
+CHINESE_DIALECTS = {"Cantonese", "Hakka", "Hokkien", "Teochew"}
+MALAY_LANGUAGES = {"Malay", "Indonesian"}
 
 
 @dataclass
@@ -35,23 +40,54 @@ class Entry:
         prefix = f"#EXTVLCOPT:http-{key}="
         return next((o[len(prefix):] for o in self.options if o.startswith(prefix)), None)
 
+    def with_group(self, group: str) -> "Entry":
+        info = re.sub(r'group-title="[^"]*"', f'group-title="{group}"', self.info)
+        return dataclasses.replace(self, info=info, options=list(self.options))
+
     def to_m3u(self) -> str:
         return "\n".join([self.info, *self.options, self.url])
 
 
 def main() -> None:
-    entries = dedupe(parse_m3u(fetch_text(SOURCE_URL)))
+    entries = collect_entries()
     by_url = {e.url: e for e in entries}
     print(f"fetched {len(entries)} entries, {len(by_url)} unique streams")
     with ThreadPoolExecutor(PROBE_THREADS) as pool:
         verdict_of = dict(zip(by_url, pool.map(probe, by_url.values())))
     kept = [e for e in entries if verdict_of[e.url] != "dead"]
-    kept.sort(key=lambda e: (e.group.lower(), e.name.lower()))
+    kept.sort(key=lambda e: (CATEGORIES.index(e.group), e.name.lower()))
     write_playlist(kept)
     verdicts = list(verdict_of.values())
     for verdict in ("alive", "geo", "dead"):
         print(f"{verdict}: {verdicts.count(verdict)} streams")
+    groups = [e.group for e in kept]
+    for category in CATEGORIES:
+        print(f"{category}: {groups.count(category)} channels")
     print(f"wrote {len(kept)} channel entries to {OUTPUT}")
+
+
+def collect_entries() -> list[Entry]:
+    """Language entries regrouped into CATEGORIES, plus Malaysia's channels from the country list."""
+    by_language = [
+        entry.with_group(category)
+        for entry in parse_m3u(fetch_text(LANGUAGE_URL))
+        if (category := category_for_language(entry.group))
+    ]
+    malaysian = [e for e in parse_m3u(fetch_text(COUNTRY_URL)) if e.group == "Malaysia"]
+    return dedupe(by_language + malaysian)
+
+
+def category_for_language(language: str) -> str | None:
+    """Folds dialects into parent language; Indonesian counts as Malay. None means drop."""
+    if language.endswith("English"):
+        return "English"
+    if language.endswith("Chinese") or language in CHINESE_DIALECTS:
+        return "Chinese"
+    if language in MALAY_LANGUAGES:
+        return "Malay"
+    if language in ("Korean", "Japanese"):
+        return language
+    return None
 
 
 def fetch_text(url: str) -> str:
@@ -75,7 +111,7 @@ def parse_m3u(text: str) -> list[Entry]:
 
 
 def dedupe(entries: list[Entry]) -> list[Entry]:
-    """Drops repeats within one country; a channel stays listed under each country it airs in."""
+    """Drops repeats within one category; a channel stays listed under each category it fits."""
     return list({(e.group, e.url): e for e in entries}.values())
 
 
