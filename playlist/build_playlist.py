@@ -20,9 +20,12 @@ CATEGORIES = ("Overstar", "English", "Chinese", "Malay", "Korean", "Japanese", *
 CHINESE_DIALECTS = {"Cantonese", "Hakka", "Hokkien", "Teochew"}
 MALAY_LANGUAGES = {"Malay", "Indonesian"}
 MOVED_COUNTRIES = {"hk": "Hong Kong"}  # tvg-id country shown only in its own category, not its language
-HK_ID_KEYS = ("tvbjade", "tvbclassic", "tvbxinghe", "phoenix", "rthk")
-HK_NAME_WORDS = ("tvb jade", "tvb classic", "tvb xing he", "jade", "viu", "hoy tv", "rthk", "mei ah",
-                 "newsworld", "news world", "pet club", "asian drama", "翡翠", "明珠", "無綫", "无线", "香港")
+HK_ID_KEYS = ("tvbjade", "tvbclassic", "tvbxinghe", "phoenixchinese", "rthk")
+HK_NAME_RE = re.compile(
+    r"\b(?:tvb jade|tvb classic|tvb xing he|jade|viu|hoy tv|rthk|mei ah|newsworld|news world|pet club|asian drama)\b"
+    r"|翡翠|明珠|無綫|无线|香港",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -109,8 +112,7 @@ def is_hong_kong(entry: Entry) -> bool:
     """Hong Kong channels go to the Hong Kong category, whatever list they came from."""
     if entry.country == "hk":
         return True
-    name = entry.name.lower()
-    return any(key in entry.ident for key in HK_ID_KEYS) or any(word in name for word in HK_NAME_WORDS)
+    return any(key in entry.ident for key in HK_ID_KEYS) or bool(HK_NAME_RE.search(entry.name))
 
 
 def category_for_language(language: str) -> str | None:
