@@ -2,7 +2,6 @@
 import dataclasses
 import re
 import sys
-import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -15,7 +14,6 @@ OUTPUT = Path(__file__).resolve().parent.parent / "public" / "playlist.m3u"
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 11) OTT Navigator"
 PROBE_THREADS = 64
 PROBE_TIMEOUT_S = 10
-GEO_BLOCK_CODES = {401, 403, 451}
 CATEGORIES = ("English", "Chinese", "Malay", "Korean", "Japanese", "Malaysia")
 CHINESE_DIALECTS = {"Cantonese", "Hakka", "Hokkien", "Teochew"}
 MALAY_LANGUAGES = {"Malay", "Indonesian"}
@@ -54,11 +52,11 @@ def main() -> None:
     print(f"fetched {len(entries)} entries, {len(by_url)} unique streams")
     with ThreadPoolExecutor(PROBE_THREADS) as pool:
         verdict_of = dict(zip(by_url, pool.map(probe, by_url.values())))
-    kept = [e for e in entries if verdict_of[e.url] != "dead"]
+    kept = [e for e in entries if verdict_of[e.url] == "alive"]
     kept.sort(key=lambda e: (CATEGORIES.index(e.group), e.name.lower()))
     write_playlist(kept)
     verdicts = list(verdict_of.values())
-    for verdict in ("alive", "geo", "dead"):
+    for verdict in ("alive", "dead"):
         print(f"{verdict}: {verdicts.count(verdict)} streams")
     groups = [e.group for e in kept]
     for category in CATEGORIES:
@@ -116,7 +114,7 @@ def dedupe(entries: list[Entry]) -> list[Entry]:
 
 
 def probe(entry: Entry) -> str:
-    """Returns alive, geo (blocked for this server's region, kept) or dead."""
+    """Returns alive or dead; 401/403 count as dead since they refuse Malaysian viewers too."""
     headers = {"User-Agent": entry.option("user-agent") or DEFAULT_USER_AGENT}
     if referrer := entry.option("referrer"):
         headers["Referer"] = referrer
@@ -124,8 +122,6 @@ def probe(entry: Entry) -> str:
         request = urllib.request.Request(entry.url, headers=headers)
         with urllib.request.urlopen(request, timeout=PROBE_TIMEOUT_S) as response:
             head = response.read(512)
-    except urllib.error.HTTPError as error:
-        return "geo" if error.code in GEO_BLOCK_CODES else "dead"
     except Exception:
         return "dead"
     return "alive" if is_playable(entry.url, head) else "dead"

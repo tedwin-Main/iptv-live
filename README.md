@@ -25,9 +25,9 @@ The playlist header points at the guide (`url-tvg`), so most players pick it up 
 
 - `playlist/build_playlist.py`: fetches `index.language.m3u` (mapped to the categories above) plus Malaysia from
   `index.country.m3u`, then requests every stream once.
-  - **Kept:** answers 2xx with a real HLS playlist, or 401/403/451. The check runs from US servers, so
-    country-locked streams answer 403 there and are kept.
-  - **Dropped:** no DNS, timeout, refused connection, 4xx/5xx, or a body that is not HLS.
+  - **Kept:** answers 2xx with a real HLS playlist.
+  - **Dropped:** no DNS, timeout, refused connection, any 4xx/5xx (401/403 included: tested from Malaysia, these
+    refuse there too), or a body that is not HLS.
 - `guide/build_guide.py`: streams epgshare01's all-sources XMLTV feed, matches channels by id (quality tags like
   `HD` removed) or by name + country, and keeps the next 48 hours.
 
