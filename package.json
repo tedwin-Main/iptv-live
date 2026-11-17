@@ -1,0 +1,15 @@
+{
+  "name": "iptv-live",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "playlist": "node playlist/build-playlist.ts",
+    "guide": "node guide/build-guide.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "~5.9.3"
+  }
+}

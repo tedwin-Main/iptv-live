@@ -21,11 +21,11 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-      - run: python -I playlist/build_playlist.py
-      - run: python -I guide/build_guide.py
+          node-version: 24
+      - run: node playlist/build-playlist.ts
+      - run: node guide/build-guide.ts
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

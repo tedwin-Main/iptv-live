@@ -25,19 +25,19 @@ The playlist header points at the guide (`url-tvg`), so most players pick it up 
 
 ## How it works
 
-- `playlist/build_playlist.py`: fetches `index.language.m3u` (mapped to the categories above) plus Malaysia,
+- `playlist/build-playlist.ts`: fetches `index.language.m3u` (mapped to the categories above) plus Malaysia,
   Singapore and Hong Kong from `index.country.m3u`, then requests every stream once.
   - **Kept:** answers 2xx with a real HLS playlist.
   - **Dropped:** no DNS, timeout, refused connection, any 4xx/5xx (401/403 included: tested from Malaysia, these
     refuse there too), or a body that is not HLS.
-- `guide/build_guide.py`: streams epgshare01's all-sources XMLTV feed, matches channels by id (quality tags like
+- `guide/build-guide.ts`: streams epgshare01's all-sources XMLTV feed, matches channels by id (quality tags like
   `HD` removed) or by name + country, and keeps the next 48 hours.
 
 ## Run locally
 
 ```bash
-python3 -I playlist/build_playlist.py   # ~7 min, writes public/playlist.m3u
-python3 -I guide/build_guide.py         # ~30 s, writes public/guide.xml.gz
+node playlist/build-playlist.ts   # ~7 min, writes public/playlist.m3u
+node guide/build-guide.ts         # ~30 s, writes public/guide.xml.gz
 ```
 
 Run it again on demand from the Actions tab: **refresh-channel-list → Run workflow**.
